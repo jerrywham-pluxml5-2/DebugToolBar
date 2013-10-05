@@ -7,7 +7,14 @@ class DebugToolBar extends plxPlugin {
 		parent::__construct($default_lang);
 		
 		# Déclarations des hooks
-		$this->addHook('plxMotorConstructLoadPlugins', 'addDebugToolBar');
+		# Partie publique
+		if(!defined('PLX_ADMIN')) {
+			$this->addHook('plxMotorDemarrageEnd', 'addDebugToolBar');
+		} 
+		# Partie administration
+		else {
+			$this->addHook('plxMotorConstructLoadPlugins', 'addDebugToolBar');
+		}
 		$this->addHook('AdminFootEndBody', 'printToolBar');
 		$this->addHook('ThemeEndBody', 'printToolBar');
 	}
