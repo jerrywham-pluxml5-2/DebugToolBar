@@ -2,8 +2,8 @@
 <document>
 	<title><![CDATA[DebugToolBar]]></title>
 	<author><![CDATA[Cyril MAGUIRE, Mickaël A., Stephane B.]]></author>
-	<version>2.0</version>
-	<date>05/10/2013</date>
+	<version>3.0</version>
+	<date>09/10/2013</date>
 	<site>http://www.ecyseo.net/, http://www.amplurimedia.net/ , http://studio.jacksay.com</site>
 	<description><![CDATA[Barre d'outils de debugagge]]></description>
 	<requirements></requirements>
