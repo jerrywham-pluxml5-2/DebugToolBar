@@ -10,12 +10,21 @@
 */
 class Debug {
 
-      private static $DEBUG_OUTPUT = "";
+      private static $DEBUG_FLOW = '';
+      private static $DEBUG_OUTPUT = '';
       private static $TRAC_NUM = 0;
       private static $debug_instance;
       private static $debug = false;
+      protected $version;
+      protected $default_lang=DEFAULT_LANG; # langue par defaut de PluXml
+      protected static $aLang=array(); # tableau contenant les clés de traduction de la langue courante de PluXml
 
-      protected function __construct() {
+
+      public function __construct($default_lang,$version) {
+
+        $this->default_lang = $default_lang;
+        $this->version = $version;
+        $this->loadLang(PLX_PLUGINS.'DebugToolBar/lang/'.$this->default_lang.'.php');
 
       }
       /****************************************************************************/
@@ -27,6 +36,47 @@ class Debug {
       /* array('::1','127.0.0.1','88.161.204.85'); */
 
       /****************************************************************************/
+
+      /**
+     * Méthode qui charge le fichier de langue par défaut du plugin
+     *
+     * @param filename  fichier de langue à charger
+     * @return  null
+     * @author  Stephane F
+     **/
+    private function loadLang($filename) {
+      if(!is_file($filename)) return;
+      include($filename);
+      self::$aLang=$LANG;
+    }
+
+    /**
+     * Méthode qui affiche une clé de traduction dans la langue par défaut de PluXml
+     *
+     * @param key   clé de traduction à récuperer
+     * @return  stdio
+     * @author  Stephane F
+     **/
+    public function lang($key='') {
+      if(isset(self::$aLang[$key]))
+        echo self::$aLang[$key];
+      else
+        echo $key;
+    }
+
+    /**
+     * Méthode qui retourne une clé de traduction dans la langue par défaut de PluXml
+     *
+     * @param key   clé de traduction à récuperer
+     * @return  string  clé de traduite
+     * @author  Stephane F
+     **/
+    public static function getLang($key='') {
+      if(isset(self::$aLang[$key]))
+        return self::$aLang[$key];
+      else
+        return $key;
+    }
 
     /**
     * Equivalent à un var_dump mais en version sécurisée et en couleur.
@@ -45,21 +95,21 @@ class Debug {
         case 'integer':$r .= '<span style="color: red; font-weight: bold;">'.$mixedvar.'</span>';break;
         case 'double':$r .= '<span style="color: #e8008d; font-weight: bold;">'.$mixedvar.'</span>';break;
         case 'string':$r .= '<span style="color: '.($index === true ? '#e84a00':'#000').';">\''.$mixedvar.'\'</span>';break;
-        case 'array':$r .= 'Tableau('.count($mixedvar).') &nbsp;{'."\r\n\n";
+        case 'array':$r .= self::getLang('L_ARRAY').'('.count($mixedvar).') &nbsp;{'."\r\n\n";
         foreach($mixedvar AS $k => $e) $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub+1).'['.self::_trac($k, $comment, $sub+1, true).'] =&gt; '.($k === 'GLOBALS' ? '* RECURSION *':self::_trac($e, $comment, $sub+1)).",\r\n";
             $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub).'}';
             break;
-        case 'object':$r .= 'Objet «<strong>'.htmlentities(get_class($mixedvar)).'</strong>»&nbsp;{'."\r\n\n";
+        case 'object':$r .= self::getLang('L_OBJECT').' «<strong>'.htmlentities(get_class($mixedvar)).'</strong>»&nbsp;{'."\r\n\n";
           $prop = get_object_vars($mixedvar);
           foreach($prop AS $name => $val){
-            if($name == 'privates_variables'){ # Hack (PS: il existe des biblio interne permettant de tuer une classe)
+            if($name == 'privates_variables'){
               for($i = 0, $count = count($mixedvar->privates_variables); $i < $count; $i++) $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub+1).'<strong>'.htmlentities($get = $mixedvar->privates_variables[$i]).'</strong> =&gt; '.self::_trac($mixedvar->$get, $comment, $sub+1)."\r\n\n";
               continue;
             }
             $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub+1).'<strong>'.htmlentities($name).'</strong> =&gt; '.self::_trac($val, $comment, $sub+1)."\r\n\n";
           }
           $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub).'}';break;
-        default:$r .= 'Variable de type <strong>'.$type.'</strong>.';break;
+        default:$r .= self::getLang('L_TYPE').' <strong>'.$type.'</strong>.';break;
       }
       $r = preg_replace('/\[(.*)\]/', '[<span class="jcktraker-id">$1</span>]', $r);
       return $r;
@@ -76,19 +126,20 @@ class Debug {
       $printDebug = '';
       foreach ($debug as $key => $value) {
         if ($value['function'] == 'trac') {
-          $printDebug .=  '<p class="jcktraker-backtrace">'."\n".'&nbsp;Appel du debug ligne '.$value['line']. ' du fichier'."\n\n".'&nbsp;<strong><em>'.$value['file'].'</em></strong>'."\n\n".'<br/></p><br/>';
+          $function = 'trac';
           $line = $value['line'];
           $file = $value['file'];
         }
         if ($line == '') {
           if ($value['function'] == 'd') {
-            $printDebug =  '<p class="jcktraker-backtrace">'."\n".'&nbsp;Appel du debug ligne '.$value['line']. ' du fichier'."\n\n".'&nbsp;<strong><em>'.$value['file'].'</em></strong>'."\n\n".'<br/></p><br/>';
+            $function = 'd';
             $line = $value['line'];
             $file = $value['file'];
-
+            break;
           }
         }
       }
+      $printDebug .=  '<p class="jcktraker-backtrace">'."\n".'&nbsp;'.self::getLang('L_CALL').' <strong>'.$function.'()</strong> '.self::getLang('L_LINE').' '.$line. ' '.self::getLang('L_OF_FILE')."\n\n".'&nbsp;<strong><em>'.$file.'</em></strong>'."\n\n".'<br/></p><br/>';
       
       $FILE = fopen( $file, 'r' );
       $LINE = 0;
@@ -127,7 +178,46 @@ class Debug {
     * @version 1.0
     */
     public static function flow( $message, $type=1 ) {
-      self::$DEBUG_OUTPUT .= '<p class="jcktraker-flow-'.$type.'">'.htmlentities($message)."</p>\n";
+      $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+      $printDebug = '';
+      foreach ($debug as $key => $value) {
+        if ($value['function'] == 'flow') {
+          $function = 'flow';
+          $line = $value['line'];
+          $file = $value['file'];
+        }
+        if ($line == '') {
+          if ($value['function'] == 'f') {
+            $function = 'f';
+            $line = $value['line'];
+            $file = $value['file'];
+
+          }
+        }
+      }
+      $printDebug .=  '<p class="jcktraker-backtrace">'."\n".'&nbsp;'.self::getLang('L_CALL').' <strong>'.$function.'()</strong> '.self::getLang('L_LINE').' '.$line. ' '.self::getLang('L_OF_FILE')."\n\n".'&nbsp;<strong><em>'.$file.'</em></strong>'."\n\n".'<br/></p><br/>';
+      
+
+      $FILE = fopen( $file, 'r' );
+      $LINE = 0;
+      $comment == '';
+          while ( ( $row = fgets( $FILE ) ) !== false ) {
+            if ( ++$LINE == $line ) {
+                $row = str_replace(array('<','>'), '', $row);
+                preg_match('/(?:.*)*f\((.*)\);(?:.*)*/U', $row, $match);
+                if (isset($match[1])) $comment = $match[1];
+                preg_match('/(?:.*)*Debug::flow\((.*)\);(?:.*)*/U',$row, $match);
+                if (isset($match[1])) $comment = $match[1];
+              break;
+            }
+          }
+          fclose( $FILE );
+     if ( self::$DEBUG_FLOW!=$printDebug ) {
+        self::$DEBUG_FLOW = $printDebug;
+        self::$DEBUG_OUTPUT .= self::$DEBUG_FLOW.'<p class="jcktraker-flow-'.$type.'">'.$comment.' = '.htmlentities($message)."</p>\n";     
+     } else {
+        self::$DEBUG_OUTPUT .= '<p class="jcktraker-flow-'.$type.'">'.$comment.' = '.htmlentities($message)."</p>\n";
+     }
       self::$TRAC_NUM++;
     }
 
@@ -157,9 +247,9 @@ class Debug {
     * @author  Cyril MAGUIRE<contact@ecyseo.net>
     * @version 2.0
     */
-    public static function getDebugInstance() {
+    public static function getDebugInstance($default_lang,$version) {
       if(!isset (self::$debug_instance) ){
-        self::$debug_instance = new Debug();self::$debug = true;
+        self::$debug_instance = new Debug($default_lang,$version);self::$debug = true;
         self::init();
       }
       return self::$debug_instance;
@@ -338,15 +428,15 @@ class Debug {
           <pre><?php echo self::_color($_REQUEST); ?></pre>
         </div>
         <div id="jcktraker-own" name="jcktraker-section">
-          <strong>YOUR TRAC</strong>
+          <strong><?php echo (self::$DEBUG_FLOW == '') ? self::getLang('L_YOUR_TRAC') : self::getLang('L_YOUR_FLOW') ?></strong>
           <div id="jcktraker-pre">
             <?php echo self::$DEBUG_OUTPUT; ?>
 
           </div>
         </div>
         <ul id="jcktraker-menu">
-          <li><strong>ToolBarDebug <span>v2.0</span></strong></li>
-          <li id="jacktraker_own_button" onclick="jcktraker_toogle('jcktraker-own', this)">TRAC(<?php echo self::$TRAC_NUM ?>)</li>
+          <li><strong>ToolBarDebug <span>v <?php echo $this->version ?> </span></strong></li>
+          <li id="jacktraker_own_button" onclick="jcktraker_toogle('jcktraker-own', this)"><?php echo (self::$DEBUG_FLOW == '') ? self::getLang('L_TRAC') : self::getLang('L_FLOW') ?>(<?php echo self::$TRAC_NUM ?>)</li>
           <li onclick="jcktraker_toogle('jcktraker-post', this)">$_POST(<?php echo count($_POST) ?>)</li>
           <li onclick="jcktraker_toogle('jcktraker-files', this)">$_FILES(<?php echo count($_FILES) ?>)</li>
           <li onclick="jcktraker_toogle('jcktraker-get', this)">$_GET(<?php echo count($_GET) ?>)</li>
