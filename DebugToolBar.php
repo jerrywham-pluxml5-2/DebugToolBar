@@ -3,8 +3,8 @@
  * Plugin Maintenance
  *
  * @package	PLX
- * @version	3.0
- * @date	09/10/2013
+ * @version	4.0
+ * @date	10/10/2013
  * @author	Cyril MAGUIRE
  **/
 include_once(PLX_PLUGINS.'DebugToolBar/class_outils_debug.php');
@@ -19,7 +19,7 @@ class DebugToolBar extends plxPlugin {
 
 		$this->setAdminProfil(PROFIL_ADMIN);
 
-		$this->Debug = Debug::getDebugInstance();
+		$this->Debug = Debug::getDebugInstance($default_lang,$this->getInfo('version'));
 		
 		# Déclarations des hooks
 		$this->addHook('AdminFootEndBody', 'printToolBar');
