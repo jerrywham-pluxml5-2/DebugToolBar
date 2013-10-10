@@ -1,7 +1,7 @@
 DebugToolBar
 ============
 
-Barre de debug disponible sur toutes les pages (publiques et privées). Elle s'affiche en bas de page.
+Barre de debug disponible sur toutes les pages (privées et/ou publiques). Elle s'affiche en bas de page.
 Toutes les variables globales sont disponibles par défaut ($_POST, $_GET, $_FILES, $_SESSION, $_COOKIE, $_REQUEST).
 
 Exploration d'une variable
